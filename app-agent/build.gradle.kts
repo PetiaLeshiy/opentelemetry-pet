@@ -18,12 +18,6 @@ java {
 	}
 }
 
-//configurations {
-//	compileOnly {
-//		extendsFrom annotationProcessor
-//	}
-//}
-
 repositories {
 	mavenCentral()
 }
@@ -52,12 +46,6 @@ val copyAgent = tasks.register<Copy>("copyAgent") {
 	into(layout.buildDirectory.dir("agent"))
 	rename("opentelemetry-javaagent-.*\\.jar", "opentelemetry-javaagent.jar")
 }
-
-//val copyExtension = tasks.register<Copy>("copyExtension") {
-//	from(extension.singleFile)
-//	into(layout.buildDirectory.dir("agent"))
-//	rename(".*\\.jar", "opentelemetry-javaagent-extension.jar")
-//}
 
 tasks.named<BootJar>("bootJar") {
 	dependsOn(copyAgent)
