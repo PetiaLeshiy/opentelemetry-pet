@@ -1,0 +1,84 @@
+plugins {
+  id "java"
+
+  id "com.gradleup.shadow" version "8.3.5"
+  id "com.diffplug.spotless" version "6.25.0"
+
+  id "io.opentelemetry.instrumentation.muzzle-generation" version "2.9.0-alpha"
+  id "io.opentelemetry.instrumentation.muzzle-check" version "2.9.0-alpha"
+}
+
+group 'io.opentelemetry.example'
+version '1.0'
+
+ext {
+  versions = [
+          // this line is managed by .github/scripts/update-sdk-version.sh
+          opentelemetrySdk           : "1.43.0",
+
+          // these lines are managed by .github/scripts/update-version.sh
+          opentelemetryJavaagent     : "2.10.0-SNAPSHOT",
+          opentelemetryJavaagentAlpha: "2.9.0-alpha-SNAPSHOT",
+
+          junit                      : "5.11.3"
+  ]
+
+    deps = [
+    autoservice: dependencies.create(group: 'com.google.auto.service', name: 'auto-service', version: '1.1.1')
+  ]
+}
+
+repositories {
+  mavenCentral()
+  maven {
+    name = "sonatype"
+    url = uri("https://oss.sonatype.org/content/repositories/snapshots")
+  }
+}
+
+
+dependencies {
+  implementation(platform("io.opentelemetry:opentelemetry-bom:${versions.opentelemetrySdk}"))
+
+  // these serve as a test of the instrumentation boms
+  implementation(platform("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:${versions.opentelemetryJavaagent}"))
+  implementation(platform("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha:${versions.opentelemetryJavaagentAlpha}"))
+
+  /*
+  Interfaces and SPIs that we implement. We use `compileOnly` dependency because during
+  runtime all necessary classes are provided by javaagent itself.
+   */
+  compileOnly("io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi")
+  compileOnly("io.opentelemetry.instrumentation:opentelemetry-instrumentation-api")
+  compileOnly("io.opentelemetry.javaagent:opentelemetry-javaagent-extension-api")
+
+  //Provides @AutoService annotation that makes registration of our SPI implementations much easier
+  compileOnly deps.autoservice
+  annotationProcessor deps.autoservice
+
+  //TODO remove when start using io.opentelemetry.instrumentation.javaagent-instrumentation plugin
+  add("codegen", "io.opentelemetry.javaagent:opentelemetry-javaagent-tooling:${versions.opentelemetryJavaagentAlpha}")
+  add("muzzleBootstrap", "io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations-support:${versions.opentelemetryJavaagentAlpha}")
+  add("muzzleTooling", "io.opentelemetry.javaagent:opentelemetry-javaagent-extension-api:${versions.opentelemetryJavaagentAlpha}")
+  add("muzzleTooling", "io.opentelemetry.javaagent:opentelemetry-javaagent-tooling:${versions.opentelemetryJavaagentAlpha}")
+}
+
+//Produces a copy of upstream javaagent with this extension jar included inside it
+//The location of extension directory inside agent jar is hard-coded in the agent source code
+task extendedAgent(type: Jar) {
+//  dependsOn(configurations.otel)
+//  archiveFileName = "opentelemetry-javaagent.jar"
+//  from zipTree(configurations.otel.singleFile)
+  from(tasks.shadowJar.archiveFile) {
+    into "extensions"
+  }
+
+  //Preserve MANIFEST.MF file from the upstream javaagent
+  doFirst {
+    manifest.from(
+      zipTree(configurations.otel.singleFile).matching {
+        include 'META-INF/MANIFEST.MF'
+      }.singleFile
+    )
+  }
+}

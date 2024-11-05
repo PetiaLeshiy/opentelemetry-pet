@@ -44,7 +44,7 @@
 
 rootProject.name = "demoopentelemetry-pet"
 include(
-    "app-agent", "custom_sampler"
+    "app_simple", "custom_sampler", "app_spring_annotation", "custom_sampler_spring"
 )
 //
 //rootProject.children.forEach {
