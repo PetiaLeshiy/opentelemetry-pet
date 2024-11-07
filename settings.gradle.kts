@@ -54,3 +54,4 @@ include(
 //        )
 //    }
 //}
+include("app_spring_starter")
