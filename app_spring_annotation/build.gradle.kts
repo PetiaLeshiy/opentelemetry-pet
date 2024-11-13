@@ -36,8 +36,7 @@ dependencies {
 	annotationProcessor ("org.projectlombok:lombok:1.18.24")
 
     agent("io.opentelemetry.javaagent:opentelemetry-javaagent:2.9.0")
-	compileOnly ("org.projectlombok:lombok")
-	annotationProcessor ("org.projectlombok:lombok")
+
 	testImplementation ("org.springframework.boot:spring-boot-starter-test")
 }
 
